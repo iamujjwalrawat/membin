@@ -7,8 +7,11 @@ import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
+const hasDb = process.env.DATABASE_URL && process.env.DATABASE_URL !== "dummy";
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  ...(hasDb ? { adapter: PrismaAdapter(prisma) } : {}),
+  session: { strategy: "jwt" },
   providers: [
     Spotify({
       clientId: process.env.SPOTIFY_CLIENT_ID || "dummy",

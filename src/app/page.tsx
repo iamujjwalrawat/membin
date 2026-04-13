@@ -4,33 +4,53 @@ import { useState } from "react";
 import { SpotifyBridge } from "@/components/SpotifyBridge";
 import { WaveformPlayer } from "@/components/WaveformPlayer";
 import { HandshakeModal } from "@/components/HandshakeModal";
-import { UserPlus, MessageCircle, Heart, Repeat2, Image as ImageIcon } from "lucide-react";
+import { UserPlus, MessageCircle, Heart, Repeat2, Image as ImageIcon, Mic } from "lucide-react";
+import { processVoiceNote } from "./actions/voice";
 
 export default function Home() {
   const [isHandshakeOpen, setHandshakeOpen] = useState(false);
+  const [comments, setComments] = useState([{
+    id: "1",
+    audioUrl: "https://actions.google.com/sounds/v1/water/waves_crashing_on_rock_beach.ogg",
+    transcript: "This is a pre-recorded voice note processed by Whisper AI. It sounds incredible."
+  }]);
+  const [isRecording, setIsRecording] = useState(false);
+
+  const handleSimulateVoice = async () => {
+    setIsRecording(true);
+    // Simulate recording delay
+    await new Promise(r => setTimeout(r, 2000));
+    const formData = new FormData();
+    const fakeBlob = new Blob(["fake-audio"], { type: "audio/mp3" });
+    formData.append("audio", fakeBlob as any);
+    formData.append("postId", "post-1");
+    formData.append("authorId", "user-1");
+
+    const res = await processVoiceNote(formData);
+    if (res.success && res.comment) {
+      setComments(prev => [...prev, {
+        id: res.comment.id,
+        audioUrl: res.comment.audioUrl!,
+        transcript: res.comment.transcript!
+      }]);
+    }
+    setIsRecording(false);
+  };
 
   return (
-    <main className="flex-1 flex flex-col items-center p-4 sm:p-8 relative z-10">
-      <header className="w-full max-w-2xl flex justify-between items-center mb-12">
+    <main className="flex-1 flex flex-col items-center p-4 sm:p-8 relative z-10 w-full overflow-hidden">
+      <header className="w-full max-w-2xl flex justify-between items-center mb-12 flex-shrink-0">
         <h1 className="text-2xl font-bold tracking-tighter text-white">Membin.</h1>
         <button 
           onClick={() => setHandshakeOpen(true)}
           className="flex items-center space-x-2 glass px-4 py-2 rounded-full hover:bg-white/10 transition-colors"
-          onMouseEnter={() => {
-            const cursor = document.querySelector('.custom-cursor');
-            if(cursor) cursor.classList.add('hovering');
-          }}
-          onMouseLeave={() => {
-            const cursor = document.querySelector('.custom-cursor');
-            if(cursor) cursor.classList.remove('hovering');
-          }}
         >
           <UserPlus className="w-4 h-4 text-[#00FFD1]" />
           <span className="text-sm font-medium">Connect</span>
         </button>
       </header>
 
-      <div className="w-full max-w-2xl space-y-8">
+      <div className="w-full max-w-2xl space-y-8 flex-1 overflow-y-auto pb-24">
         {/* Make a Post component mock */}
         <div className="glass p-6 rounded-2xl w-full border border-white/10 space-y-4">
           <div className="flex items-center space-x-4">
@@ -60,14 +80,26 @@ export default function Home() {
             <button className="hover:text-[#00FFD1] transition-colors"><MessageCircle className="w-5 h-5" /></button>
             <button className="hover:text-[#00FFD1] transition-colors"><Repeat2 className="w-5 h-5" /></button>
             <button className="hover:text-red-500 transition-colors"><Heart className="w-5 h-5" /></button>
+            
+            <button 
+              onClick={handleSimulateVoice} 
+              disabled={isRecording}
+              className={`hover:text-[#00FFD1] transition-colors flex items-center space-x-1 ml-auto ${isRecording ? 'animate-pulse text-[#00FFD1]' : ''}`}
+            >
+              <Mic className="w-5 h-5" />
+              <span className="text-sm font-medium">{isRecording ? "Listening..." : "Whisper"}</span>
+            </button>
           </div>
           
           {/* Comments Section */}
           <div className="pt-4 space-y-3 pl-4 border-l border-white/10">
-            <WaveformPlayer 
-              audioUrl="https://actions.google.com/sounds/v1/water/waves_crashing_on_rock_beach.ogg"
-              transcript="This is a voice note processed by Whisper AI. It sounds incredible."
-            />
+            {comments.map(c => (
+              <WaveformPlayer 
+                key={c.id}
+                audioUrl={c.audioUrl}
+                transcript={c.transcript}
+              />
+            ))}
           </div>
         </div>
       </div>

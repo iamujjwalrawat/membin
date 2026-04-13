@@ -18,31 +18,43 @@ export async function processVoiceNote(formData: FormData) {
       throw new Error("No audio file provided");
     }
 
-    // 1. Send to OpenAI Whisper for transcription
-    // Note: OpenAI API expects a File object which corresponds to the Blob interface
-    const transcription = await openai.audio.transcriptions.create({
-      file: audioFile,
-      model: "whisper-1",
-    });
+    let transcript = "This is an AI-generated mock transcript of your audio because the OpenAI API key is not configured yet.";
+    let mockAudioUrl = `https://actions.google.com/sounds/v1/water/waves_crashing_on_rock_beach.ogg`;
 
-    const transcript = transcription.text;
+    // 1. Send to OpenAI Whisper for transcription if key exists
+    if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== "dummy") {
+      const transcription = await openai.audio.transcriptions.create({
+        file: audioFile,
+        model: "whisper-1",
+      });
+      transcript = transcription.text;
+    }
 
-    // 2. Mock saving to S3 / Uploadthing and get audio URL
-    // In a full environment, you would upload `audioFile` to a bucket.
-    const mockAudioUrl = `https://mock-storge.com/${Date.now()}.mp3`;
+    // 3. Save to database if configured, otherwise return mock
+    if (process.env.DATABASE_URL && process.env.DATABASE_URL !== "dummy") {
+      const comment = await prisma.comment.create({
+        data: {
+          text: transcript,
+          transcript: transcript,
+          audioUrl: mockAudioUrl,
+          postId: postId,
+          authorId: authorId,
+        },
+      });
+      return { success: true, comment };
+    }
 
-    // 3. Save to database
-    const comment = await prisma.comment.create({
-      data: {
-        text: transcript,
-        transcript: transcript, // store both or just transcript
+    return { 
+      success: true, 
+      comment: { 
+        id: "mock-" + Date.now(), 
+        text: transcript, 
+        transcript, 
         audioUrl: mockAudioUrl,
-        postId: postId,
-        authorId: authorId,
-      },
-    });
-
-    return { success: true, comment };
+        authorId,
+        postId
+      } 
+    };
   } catch (error) {
     console.error("Failed to process voice note:", error);
     return { success: false, error: "Failed to process voice note" };
