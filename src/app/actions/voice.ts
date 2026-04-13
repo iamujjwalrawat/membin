@@ -3,10 +3,12 @@
 import OpenAI from "openai";
 import { PrismaClient } from "@prisma/client";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-const prisma = new PrismaClient();
+const openai = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== "dummy"
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
+
+const hasDb = process.env.DATABASE_URL && process.env.DATABASE_URL !== "dummy";
+const prisma = hasDb ? new PrismaClient() : null;
 
 export async function processVoiceNote(formData: FormData) {
   try {
@@ -22,7 +24,7 @@ export async function processVoiceNote(formData: FormData) {
     let mockAudioUrl = `https://actions.google.com/sounds/v1/water/waves_crashing_on_rock_beach.ogg`;
 
     // 1. Send to OpenAI Whisper for transcription if key exists
-    if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== "dummy") {
+    if (openai) {
       const transcription = await openai.audio.transcriptions.create({
         file: audioFile,
         model: "whisper-1",
@@ -31,7 +33,7 @@ export async function processVoiceNote(formData: FormData) {
     }
 
     // 3. Save to database if configured, otherwise return mock
-    if (process.env.DATABASE_URL && process.env.DATABASE_URL !== "dummy") {
+    if (prisma && hasDb) {
       const comment = await prisma.comment.create({
         data: {
           text: transcript,
