@@ -2,6 +2,9 @@ import NextAuth from "next-auth"
 import Spotify from "next-auth/providers/spotify"
 import LinkedIn from "next-auth/providers/linkedin"
 import Email from "next-auth/providers/email"
+import Google from "next-auth/providers/google"
+import Facebook from "next-auth/providers/facebook"
+import Instagram from "next-auth/providers/instagram"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { PrismaClient } from "@prisma/client"
 
@@ -20,6 +23,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     LinkedIn({
       clientId: process.env.LINKEDIN_CLIENT_ID || "dummy",
       clientSecret: process.env.LINKEDIN_CLIENT_SECRET || "dummy",
+    }),
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID || "dummy",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "dummy",
+    }),
+    Facebook({
+      clientId: process.env.FACEBOOK_CLIENT_ID || "dummy",
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET || "dummy",
+    }),
+    Instagram({
+      clientId: process.env.INSTAGRAM_CLIENT_ID || "dummy",
+      clientSecret: process.env.INSTAGRAM_CLIENT_SECRET || "dummy",
     }),
     Email({
       server: process.env.EMAIL_SERVER || "smtp://localhost:1025",

@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Cursor } from "@/components/Cursor";
 import { PageTransition } from "@/components/PageTransition";
+import { NavigationBar } from "@/components/NavigationBar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,6 +26,7 @@ export default function RootLayout({
         <PageTransition>
           {children}
         </PageTransition>
+        <NavigationBar />
       </body>
     </html>
   );
